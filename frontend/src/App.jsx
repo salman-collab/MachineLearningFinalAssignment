@@ -1,18 +1,24 @@
 import { useState } from "react";
 import axios from "axios";
+import "./App.css";
+
 import {
   BarChart,
   Bar,
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid
+  CartesianGrid,
+  LineChart,
+  Line,
+  Legend
 } from "recharts";
 
 function App() {
   const [model, setModel] = useState("logistic_regression");
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState({});
+
   const handlePredict = async () => {
     setLoading(true);
     try {
@@ -21,12 +27,7 @@ function App() {
         null,
         { params: { model_name: model } }
       );
-
-      setResults(prev => ({
-        ...prev,
-        [model]: response.data
-      }));
-
+      setData(response.data);
     } catch (error) {
       console.error(error);
     }
@@ -34,32 +35,43 @@ function App() {
   };
 
   return (
-    <div style={{ padding: "30px", fontFamily: "Arial" }}>
-      <h1>ML Dashboard</h1>
+    <div className="container">
 
-      <div style={{ marginBottom: "20px" }}>
-        <select onChange={(e) => setModel(e.target.value)}>
-          <option value="logistic_regression">Logistic Regression</option>
-          <option value="linear_regression">Linear Regression</option>
-        </select>
-
-        <button onClick={handlePredict} style={{ marginLeft: "10px" }}>
-          {loading ? "Running..." : "Run Model"}
-        </button>
+      <div className="header">
+        ML Model Dashboard
       </div>
 
-      {Object.keys(results).length > 0 && (
-        <div>
-          <h2>Accuracy: {results[model]?.accuracy?.toFixed(2)}</h2>
+      {/* Controls */}
+      <div className="card">
+        <div className="controls">
+          <select onChange={(e) => setModel(e.target.value)}>
+            <option value="logistic_regression">Logistic Regression</option>
+            <option value="linear_regression">Linear Regression</option>
+          </select>
+
+          <button onClick={handlePredict}>
+            {loading ? "Running..." : "Run Model"}
+          </button>
+        </div>
+      </div>
+
+      {/* ================= LOGISTIC REGRESSION ================= */}
+      {data && data.accuracy && data.confusion_matrix && (
+        <div className="card">
+          <h3>Classification Performance</h3>
+
+          <p><strong>Accuracy:</strong> {data.accuracy.toFixed(2)}</p>
+          <p><strong>Precision:</strong> {data.precision.toFixed(2)}</p>
+          <p><strong>Recall:</strong> {data.recall.toFixed(2)}</p>
 
           <BarChart
             width={500}
             height={300}
             data={[
-              { name: "TP", value: results[model]?.confusion_matrix?.TP },
-              { name: "TN", value: results[model]?.confusion_matrix?.TN },
-              { name: "FP", value: results[model]?.confusion_matrix?.FP },
-              { name: "FN", value: results[model]?.confusion_matrix?.FN }
+              { name: "TP", value: data.confusion_matrix.TP },
+              { name: "TN", value: data.confusion_matrix.TN },
+              { name: "FP", value: data.confusion_matrix.FP },
+              { name: "FN", value: data.confusion_matrix.FN }
             ]}
           >
             <CartesianGrid strokeDasharray="3 3" />
@@ -68,18 +80,36 @@ function App() {
             <Tooltip />
             <Bar dataKey="value" />
           </BarChart>
-          {Object.keys(results).length > 0 && (
-            <div>
-              <h2>Model Comparison</h2>
-              {Object.entries(results).map(([name, res]) => (
-                <div key={name}>
-                  <strong>{name}</strong>: {res.accuracy?.toFixed(2)}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
+
+      {/* ================= LINEAR REGRESSION ================= */}
+      {data && data.mse && data.actual && data.predicted && (
+        <div className="card">
+          <h3>Regression Performance</h3>
+
+          <p><strong>MSE:</strong> {data.mse.toFixed(4)}</p>
+
+          <LineChart
+            width={600}
+            height={300}
+            data={data.actual.map((val, i) => ({
+              index: i,
+              actual: val,
+              predicted: data.predicted[i]
+            }))}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="index" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line type="monotone" dataKey="actual" name="Actual" stroke="#4CAF50" strokeWidth={2} />
+            <Line type="monotone" dataKey="predicted" name="Predicted" stroke="#2196F3" strokeWidth={2} />
+          </LineChart>
+        </div>
+      )}
+
     </div>
   );
 }

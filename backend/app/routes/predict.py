@@ -35,9 +35,14 @@ def predict(model_name: str):
         model.fit(X_train, y_train)
         preds = model.predict(X_test)
 
+        # Calculate simple error (MSE)
+        mse = sum((yt - yp) ** 2 for yt, yp in zip(y_test, preds)) / len(y_test)
+
         return {
             "model": model_name,
-            "predictions": preds[:10]
+            "mse": mse,
+            "actual": y_test[:20],
+            "predicted": preds[:20]
         }
 
     elif model_name == "logistic_regression":
