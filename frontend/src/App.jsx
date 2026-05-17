@@ -11,6 +11,7 @@ import {
   CartesianGrid,
   LineChart,
   Line,
+  Cell,
   Legend
 } from "recharts";
 
@@ -60,27 +61,39 @@ function App() {
         <div className="card">
           <h3>Classification Performance</h3>
 
-          <p><strong>Accuracy:</strong> {data.accuracy.toFixed(2)}</p>
-          <p><strong>Precision:</strong> {data.precision.toFixed(2)}</p>
-          <p><strong>Recall:</strong> {data.recall.toFixed(2)}</p>
+          <div style={{ display: "flex", gap: "20px" }}>
+            <div><strong>Accuracy:</strong> {data.accuracy.toFixed(2)}</div>
+            <div><strong>Precision:</strong> {data.precision.toFixed(2)}</div>
+            <div><strong>Recall:</strong> {data.recall.toFixed(2)}</div>
+          </div>
 
           <BarChart
             width={500}
             height={300}
             data={[
-              { name: "TP", value: data.confusion_matrix.TP },
-              { name: "TN", value: data.confusion_matrix.TN },
-              { name: "FP", value: data.confusion_matrix.FP },
-              { name: "FN", value: data.confusion_matrix.FN }
+              { name: "Correct Churn(TP)", value: data.confusion_matrix.TP },
+              { name: "Correct No Churn(TN)", value: data.confusion_matrix.TN },
+              { name: "Wrong Churn(FP)", value: data.confusion_matrix.FP },
+              { name: "Missed Churn(FN)", value: data.confusion_matrix.FN }
             ]}
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
             <Tooltip />
-            <Bar dataKey="value" />
+            <Bar dataKey="value">
+              <Cell fill="#4CAF50" />   {/* Correct */}
+              <Cell fill="#193b23" />
+              <Cell fill="#d48c7c" />   {/* Wrong */}
+              <Cell fill="#FF5733" />
+            </Bar>
           </BarChart>
+                <p>
+  Model correctly identified {data.confusion_matrix.TP + data.confusion_matrix.TN} cases
+  and made {data.confusion_matrix.FP + data.confusion_matrix.FN} mistakes.
+</p>
         </div>
+        
       )}
 
       {/* ================= LINEAR REGRESSION ================= */}
@@ -104,8 +117,8 @@ function App() {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Line type="monotone" dataKey="actual" name="Actual" stroke="#4CAF50" strokeWidth={2} />
-            <Line type="monotone" dataKey="predicted" name="Predicted" stroke="#2196F3" strokeWidth={2} />
+            <Line type="monotone" dot={{ r: 3 }} dataKey="actual" name="Actual" stroke="#4CAF50" strokeWidth={2} />
+            <Line type="monotone" dot={{ r: 5 }} dataKey="predicted" name="Predicted" stroke="#2196F3" strokeWidth={2} />
           </LineChart>
         </div>
       )}
