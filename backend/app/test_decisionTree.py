@@ -1,5 +1,5 @@
 from core.preprocessing import load_data, clean_data, encode_data, normalize, train_test_split
-from algorithms.linear_regression import LinearRegression
+from algorithms.decision_tree import DecisionTree
 
 df = load_data("data/churn.csv")
 df = clean_data(df)
