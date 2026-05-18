@@ -6,11 +6,11 @@ df = clean_data(df)
 df = encode_data(df)
 df = normalize(df)
 print(df.head())
-# Target column
-X = df.drop("Churn", axis=1).values.tolist()
+# Features
+X = df.drop("Churn Label", axis=1).values.tolist()
 
-# Convert target into list
-y = df["Churn"].values.tolist()
+# Target
+y = df["Churn Label"].values.tolist()
 
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 
