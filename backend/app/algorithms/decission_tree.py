@@ -1,5 +1,7 @@
+import csv
 import math
 from collections import Counter
+
 
 class DecisionTree:
     def __init__(self, max_depth=5):
@@ -12,21 +14,27 @@ class DecisionTree:
         counts = Counter(y)
 
         entropy_value = 0
+
         for count in counts.values():
             probability = count / total
-            entropy_value -= probability * math.log2(probability)
+
+            if probability > 0:
+                entropy_value -= probability * math.log2(probability)
 
         return entropy_value
 
     # Split dataset
     def split_dataset(self, X, y, feature_index, threshold):
+
         left_X, right_X = [], []
         left_y, right_y = [], []
 
         for i in range(len(X)):
+
             if X[i][feature_index] <= threshold:
                 left_X.append(X[i])
                 left_y.append(y[i])
+
             else:
                 right_X.append(X[i])
                 right_y.append(y[i])
@@ -35,6 +43,7 @@ class DecisionTree:
 
     # Information Gain
     def information_gain(self, parent_y, left_y, right_y):
+
         parent_entropy = self.entropy(parent_y)
 
         n = len(parent_y)
@@ -50,13 +59,18 @@ class DecisionTree:
         )
 
         gain = parent_entropy - child_entropy
+
         return gain
 
     # Find best split
     def best_split(self, X, y):
+
         best_gain = -1
         best_feature = None
         best_threshold = None
+
+        if len(X) == 0:
+            return None, None
 
         n_features = len(X[0])
 
@@ -79,25 +93,36 @@ class DecisionTree:
 
         return best_feature, best_threshold
 
-    # Build tree recursively
+    # Majority class
+    def majority_class(self, y):
+        return Counter(y).most_common(1)[0][0]
+
+    # Build Tree
     def build_tree(self, X, y, depth=0):
 
-        # If all labels are same
+        # If all labels same
         if len(set(y)) == 1:
             return y[0]
 
         # Stop if max depth reached
         if depth >= self.max_depth:
-            return Counter(y).most_common(1)[0][0]
+            return self.majority_class(y)
+
+        if len(X) == 0:
+            return self.majority_class(y)
 
         feature, threshold = self.best_split(X, y)
 
         if feature is None:
-            return Counter(y).most_common(1)[0][0]
+            return self.majority_class(y)
 
         left_X, right_X, left_y, right_y = self.split_dataset(
             X, y, feature, threshold
         )
+
+        # Prevent empty split
+        if len(left_X) == 0 or len(right_X) == 0:
+            return self.majority_class(y)
 
         left_subtree = self.build_tree(left_X, left_y, depth + 1)
         right_subtree = self.build_tree(right_X, right_y, depth + 1)
@@ -124,37 +149,78 @@ class DecisionTree:
 
         if x[feature] <= threshold:
             return self.predict_single(x, tree["left"])
+
         else:
             return self.predict_single(x, tree["right"])
 
     # Predict multiple samples
     def predict(self, X):
-        return [self.predict_single(x, self.tree) for x in X]
+
+        predictions = []
+
+        for x in X:
+            predictions.append(self.predict_single(x, self.tree))
+
+        return predictions
 
 
-# Example Dataset
-X = [
-    [2, 3],
-    [1, 5],
-    [3, 6],
-    [6, 2],
-    [7, 3],
-    [8, 1]
-]
+# =========================
+# LOAD CSV DATASET
+# =========================
 
-y = [0, 0, 0, 1, 1, 1]
+X = []
+y = []
 
-# Create model
+# Change path according to your file location
+file_path = "backend/app/data/churn.csv"
+
+with open(file_path, "r") as file:
+
+    csv_reader = csv.reader(file)
+
+    header = next(csv_reader)
+
+    for row in csv_reader:
+
+        features = []
+
+        # Convert numeric columns
+        for value in row[1:-1]:
+
+            try:
+                features.append(float(value))
+
+            except:
+                # Convert categorical text into number
+                features.append(float(len(value)))
+
+        X.append(features)
+
+        # Target column
+        target = row[-1]
+
+        if target.lower() == "yes":
+            y.append(1)
+        else:
+            y.append(0)
+
+
+# =========================
+# TRAIN MODEL
+# =========================
+
 model = DecisionTree(max_depth=3)
 
-# Train model
 model.fit(X, y)
 
-# Predictions
-predictions = model.predict(X)
+# =========================
+# PREDICTIONS
+# =========================
 
-print("Predictions:", predictions)
+predictions = model.predict(X[:10])
 
-# Print tree
-print("Decision Tree:")
+print("First 10 Predictions:")
+print(predictions)
+
+print("\nDecision Tree:")
 print(model.tree)
